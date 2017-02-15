@@ -1,6 +1,6 @@
 package glog
 
-const DEFAULT_TAG = "PRETTYLOGGER"
+const DEFAULT_TAG = "main"
 const classNameLogger = "glog"
 
 const (
@@ -18,24 +18,29 @@ func init() {
 	printer = NewLoggerPrinter()
 }
 
-func d(v ...interface{}) {
+func D(v ...interface{}) {
 	message, args := getMessage(v)
-	printer.d(message, args...)
+	printer.D(message, args...)
 }
 
-func e(v ...interface{}) {
+func E(v ...interface{}) {
 	message, args := getMessage(v)
-	printer.e(message, args...)
+	printer.E(message, args...)
 }
 
-func v(v ...interface{}) {
+func V(v ...interface{}) {
 	message, args := getMessage(v)
-	printer.v(message, args...)
+	printer.V(message, args...)
 }
 
-func w(v ...interface{}) {
+func W(v ...interface{}) {
 	message, args := getMessage(v)
-	printer.w(message, args...)
+	printer.W(message, args...)
+}
+
+func I(v ...interface{}) {
+	message, args := getMessage(v)
+	printer.I(message, args...)
 }
 
 func getMessage(v []interface{}) (message string, arg []interface{}) {

@@ -17,11 +17,11 @@ func NewSettings() *Settings {
 	}
 }
 
-func (s *Settings) setLogLevel(lv LogLevel) {
+func (s *Settings) SetLogLevel(lv LogLevel) {
 	s.logLevel = lv
 }
 
-func (s *Settings) getLogLevel() LogLevel {
+func (s *Settings) GetLogLevel() LogLevel {
 	return s.logLevel
 }
 
@@ -40,15 +40,15 @@ func (s *Settings) setlogAdapter(logAdapter LogAdapter) {
 	s.logAdapter = logAdapter
 }
 
-func (s *Settings) isShowThreadInfo() bool {
+func (s *Settings) IsShowThreadInfo() bool {
 	return s.showThreadInfo
 }
 
-func (s *Settings) hideThreadInfo() {
+func (s *Settings) HideThreadInfo() {
 	s.showThreadInfo = false
 }
 
-func (s *Settings) reset() {
+func (s *Settings) Reset() {
 	s.methodCount = 2
 	s.methodOffset = 0
 	s.showThreadInfo = true

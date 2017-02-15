@@ -3,17 +3,21 @@ package glog
 import "testing"
 
 func TestDebugLog(t *testing.T) {
-	d("message")
+	D("message")
 }
 
 func TestVerboseLog(t *testing.T) {
-	v("message")
+	V("message")
 }
 
 func TestWarningLog(t *testing.T) {
-	w("message")
+	W("message")
 }
 
 func TestErrorLog(t *testing.T) {
-	e("message")
+	E("message")
+}
+
+func TestInfoLog(t *testing.T) {
+	I("message")
 }

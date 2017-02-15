@@ -1,7 +1,7 @@
 package glog
 
 import (
-	"fmt"
+	"github.com/fatih/color"
 	"sync"
 )
 
@@ -46,5 +46,15 @@ func (ad *ConsoleLogAdapter) log(lv int, tag, message string) {
 	ad.mu.Lock()
 	defer ad.mu.Unlock()
 
-	fmt.Println(message)
+	switch lv {
+	case LevelDEBUG:
+		color.Cyan(message)
+	case LevelWARN:
+		color.Yellow(message)
+	case LevelERROR, LevelASSERT:
+		color.Red(message)
+	default:
+		color.Blue(message)
+		//fmt.Println(message)
+	}
 }

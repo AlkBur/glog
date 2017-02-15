@@ -2,11 +2,11 @@ package glog
 
 type Printer interface {
 	init(tag string)
-	d(message string, args ...interface{})
-	e(message string, args ...interface{})
-	w(message string, args ...interface{})
-	i(message string, args ...interface{})
-	v(message string, args ...interface{})
-	wtf(message string, args ...interface{})
+	D(message string, args ...interface{})
+	E(message string, args ...interface{})
+	W(message string, args ...interface{})
+	I(message string, args ...interface{})
+	V(message string, args ...interface{})
+	WTF(message string, args ...interface{})
 	log(priority int, msg string, args ...interface{})
 }

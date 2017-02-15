@@ -6,6 +6,7 @@ import (
 	"math"
 	"strings"
 	"sync"
+	"time"
 )
 
 const (
@@ -18,6 +19,8 @@ const (
 	DOUBLE_DIVIDER         = "════════════════════════════════════════════"
 	SINGLE_DIVIDER         = "────────────────────────────────────────────"
 )
+
+const DefaultTimestampFormat = time.RFC3339
 
 var (
 	TOP_BORDER    string
@@ -44,26 +47,28 @@ type LoggerPrinter struct {
 	localMethodCount ThreadLocal
 	localTag         ThreadLocal
 	settings         *Settings
-	currentThread    string
 }
 
 func NewLoggerPrinter() *LoggerPrinter {
 	l := &LoggerPrinter{
-		currentThread: "main",
-		settings:      NewSettings(),
+		settings: NewSettings(),
 	}
 	l.init(DEFAULT_TAG)
 	return l
 }
 
-func (log *LoggerPrinter) setThread(tag string) {
+func (log *LoggerPrinter) SetTag(tag string) {
 	if tag == "" {
 		panic("Thread may not be null")
 	}
 	if len(strings.TrimSpace(tag)) == 0 {
 		panic("Thread may not be empty")
 	}
-	log.currentThread = tag
+	log.tag = tag
+}
+
+func (log *LoggerPrinter) GetTag() string {
+	return log.tag
 }
 
 func (log *LoggerPrinter) init(tag string) {
@@ -76,41 +81,36 @@ func (log *LoggerPrinter) init(tag string) {
 	log.tag = tag
 }
 
-func (l *LoggerPrinter) d(message string, args ...interface{}) {
+func (l *LoggerPrinter) D(message string, args ...interface{}) {
 	l.log(LevelDEBUG, message, args...)
 }
 
-func (l *LoggerPrinter) e(message string, args ...interface{}) {
+func (l *LoggerPrinter) E(message string, args ...interface{}) {
 	l.log(LevelERROR, message, args...)
 }
 
-func (l *LoggerPrinter) w(message string, args ...interface{}) {
+func (l *LoggerPrinter) W(message string, args ...interface{}) {
 	l.log(LevelWARN, message, args...)
 }
 
-func (l *LoggerPrinter) v(message string, args ...interface{}) {
+func (l *LoggerPrinter) V(message string, args ...interface{}) {
 	l.log(LevelVERBOSE, message, args...)
 }
 
-func (l *LoggerPrinter) i(message string, args ...interface{}) {
+func (l *LoggerPrinter) I(message string, args ...interface{}) {
 	l.log(LevelINFO, message, args...)
 }
 
-func (l *LoggerPrinter) wtf(message string, args ...interface{}) {
+func (l *LoggerPrinter) WTF(message string, args ...interface{}) {
 	l.log(LevelASSERT, message, args...)
 }
 
-func (l *LoggerPrinter) getTag() string {
-	return l.tag
-}
-
 func (l *LoggerPrinter) log(priority int, msg string, args ...interface{}) {
-	if l.settings.getLogLevel() == LogLevelNONE {
+	if l.settings.GetLogLevel() == LogLevelNONE {
 		return
 	}
 	arrStr := make([]string, 0, 100)
 
-	tag := l.getTag()
 	message := createMessage(msg, args...)
 
 	//if (throwable != null && message != null) {
@@ -122,31 +122,31 @@ func (l *LoggerPrinter) log(priority int, msg string, args ...interface{}) {
 	}
 	methodCount := l.getMethodCount()
 
-	arrStr = append(arrStr, l.logTopBorder(priority, tag))
-	arrStr = append(arrStr, l.logHeaderContent(priority, tag, methodCount)...)
+	arrStr = append(arrStr, l.logTopBorder(priority))
+	arrStr = append(arrStr, l.logHeaderContent(priority, methodCount)...)
 
 	//get bytes of message with system's default charset (which is UTF-8 for Android)
 	//bytes := bytes.NewBufferString(message)
 	length := len(message)
 	if length <= CHUNK_SIZE {
 		if methodCount > 0 {
-			arrStr = append(arrStr, l.logDivider(priority, tag))
+			arrStr = append(arrStr, l.logDivider(priority))
 		}
-		arrStr = append(arrStr, l.logContent(priority, tag, message)...)
-		arrStr = append(arrStr, l.logBottomBorder(priority, tag))
-		l.logChunk(priority, tag, strings.Join(arrStr, "\n"))
+		arrStr = append(arrStr, l.logContent(priority, message)...)
+		arrStr = append(arrStr, l.logBottomBorder(priority))
+		l.logChunk(priority, strings.Join(arrStr, "\n"))
 		return
 	}
 	if methodCount > 0 {
-		arrStr = append(arrStr, l.logDivider(priority, tag))
+		arrStr = append(arrStr, l.logDivider(priority))
 	}
 	for i := 0; i < length; i += CHUNK_SIZE {
 		count := int(math.Min(float64(length-i), CHUNK_SIZE))
 		//create a new String with system's default charset (which is UTF-8)
-		arrStr = append(arrStr, l.logContent(priority, tag, message[i:i+count])...)
+		arrStr = append(arrStr, l.logContent(priority, message[i:i+count])...)
 	}
-	arrStr = append(arrStr, l.logBottomBorder(priority, tag))
-	l.logChunk(priority, tag, strings.Join(arrStr, "\n"))
+	arrStr = append(arrStr, l.logBottomBorder(priority))
+	l.logChunk(priority, strings.Join(arrStr, "\n"))
 }
 
 func (l *LoggerPrinter) getMethodCount() int {
@@ -162,12 +162,12 @@ func (l *LoggerPrinter) getMethodCount() int {
 	return result
 }
 
-func (l *LoggerPrinter) logTopBorder(logType int, tag string) string {
+func (l *LoggerPrinter) logTopBorder(logType int) string {
 	return TOP_BORDER
 }
 
-func (l *LoggerPrinter) logChunk(logType int, tag, chunk string) {
-	finalTag := l.formatTag(tag)
+func (l *LoggerPrinter) logChunk(logType int, chunk string) {
+	finalTag := l.GetTag()
 	switch logType {
 	case LevelERROR:
 		l.settings.getLogAdapter().e(finalTag, chunk)
@@ -186,20 +186,13 @@ func (l *LoggerPrinter) logChunk(logType int, tag, chunk string) {
 	}
 }
 
-func (l *LoggerPrinter) formatTag(tag string) string {
-	if tag == "" && !strings.EqualFold(l.tag, tag) {
-		return l.tag + "-" + tag
-	}
-	return l.tag
-}
-
-func (l *LoggerPrinter) logHeaderContent(logType int, tag string, methodCount int) []string {
+func (l *LoggerPrinter) logHeaderContent(logType int, methodCount int) []string {
 	arrStr := make([]string, 0)
 
 	trace := getStackTrace()
-	if l.settings.isShowThreadInfo() {
-		arrStr = append(arrStr, HORIZONTAL_DOUBLE_LINE+" Thread: "+l.currentThread)
-		arrStr = append(arrStr, l.logDivider(logType, tag))
+	if l.settings.IsShowThreadInfo() {
+		arrStr = append(arrStr, HORIZONTAL_DOUBLE_LINE+" Tag: "+l.tag+"\t time="+time.Now().Format(DefaultTimestampFormat))
+		arrStr = append(arrStr, l.logDivider(logType))
 	}
 	level := ""
 	stackOffset := getStackOffset(trace) + l.settings.getMethodOffset()
@@ -237,11 +230,11 @@ func (l *LoggerPrinter) logHeaderContent(logType int, tag string, methodCount in
 	return arrStr
 }
 
-func (l *LoggerPrinter) logDivider(logType int, tag string) string {
+func (l *LoggerPrinter) logDivider(logType int) string {
 	return MIDDLE_BORDER
 }
 
-func (l *LoggerPrinter) logContent(logType int, tag, chunk string) []string {
+func (l *LoggerPrinter) logContent(logType int, chunk string) []string {
 	lines := strings.Split(chunk, "\n")
 	for i := range lines {
 		lines[i] = HORIZONTAL_DOUBLE_LINE + lines[i]
@@ -249,7 +242,7 @@ func (l *LoggerPrinter) logContent(logType int, tag, chunk string) []string {
 	return lines
 }
 
-func (l *LoggerPrinter) logBottomBorder(logType int, tag string) string {
+func (l *LoggerPrinter) logBottomBorder(logType int) string {
 	return BOTTOM_BORDER
 }
 
