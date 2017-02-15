@@ -49,25 +49,31 @@ func getStackTrace() []*StackTraceElement {
 		// to the list of callers.
 		if name == "runtime.goexit" {
 			break
+		} else if name == "runtime.main" {
+			break
 		} else if name == "testing.tRunner" {
 			break
 		}
 
 		lastSlash := strings.LastIndex(name, "/")
-		if lastSlash < 0 {
-			lastSlash = 0
-		} else {
-			lastSlash++
-		}
-		lastDot := strings.LastIndex(name, ".")
-		if lastDot < 0 {
-			lastDot = 0
+		if lastSlash > 0 {
+			name = name[lastSlash+1:]
 		}
 
+		lastDot := strings.LastIndexByte(name, '.')
+		if lastDot < 0 {
+			lastDot = 0
+		} else {
+			lastDot++
+		}
+		firstDot := strings.IndexByte(name, '.')
+		if firstDot < 0 {
+			firstDot = len(name)
+		}
 		el := &StackTraceElement{
 			file:   file,
-			method: name[lastDot+1:],
-			class:  name[lastSlash:lastDot],
+			method: name[lastDot:],
+			class:  name[:firstDot],
 			line:   line,
 		}
 		arr = append(arr, el)

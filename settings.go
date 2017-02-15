@@ -58,3 +58,7 @@ func (s *Settings) Reset() {
 func (s *Settings) getMethodOffset() int {
 	return s.methodOffset
 }
+
+func (s *Settings) SetMethodOffset(skip int) {
+	s.methodOffset = skip
+}

@@ -11,7 +11,7 @@ import (
 
 const (
 	CHUNK_SIZE             = 4000
-	MIN_STACK_OFFSET       = 3
+	MIN_STACK_OFFSET       = 1
 	TOP_LEFT_CORNER        = "╔"
 	BOTTOM_LEFT_CORNER     = "╚"
 	MIDDLE_CORNER          = "╟"
@@ -69,6 +69,10 @@ func (log *LoggerPrinter) SetTag(tag string) {
 
 func (log *LoggerPrinter) GetTag() string {
 	return log.tag
+}
+
+func (log *LoggerPrinter) GetSettins() *Settings {
+	return log.settings
 }
 
 func (log *LoggerPrinter) init(tag string) {
@@ -247,11 +251,11 @@ func (l *LoggerPrinter) logBottomBorder(logType int) string {
 }
 
 func getStackOffset(trace []*StackTraceElement) int {
-	for i := MIN_STACK_OFFSET; i < len(trace); i++ {
+	for i := len(trace) - 1; i > MIN_STACK_OFFSET; i-- {
 		e := trace[i]
 		name := e.getClassName()
-		if !strings.EqualFold(name, classNameLogger) {
-			return i - 1
+		if strings.EqualFold(name, classNameLogger) {
+			return i
 		}
 	}
 	return -1
